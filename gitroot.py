@@ -174,6 +174,22 @@ def get_status():
     deleted = entry_paths - paths
     return (sorted(changed), sorted(new), sorted(deleted))
 
+def status():
+    """Show status of working copy."""
+    changed, new, deleted = get_status()
+    if changed:
+        print('changed files:')
+        for path in changed:
+            print('   ', path)
+    if new:
+        print('new files:')
+        for path in new:
+            print('   ', path)
+    if deleted:
+        print('deleted files:')
+        for path in deleted:
+            print('   ', path)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
