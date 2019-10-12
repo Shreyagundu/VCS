@@ -210,7 +210,22 @@ def diff():
         if i < len(changed) - 1:
             print('-' * 70)
 
-
+def write_index(entries):
+    """Write list of IndexEntry objects to git index file."""
+    packed_entries = []
+    for entry in entries:
+        entry_head = struct.pack('!LLLLLLLLLL20sH',
+                entry.ctime_s, entry.ctime_n, entry.mtime_s, entry.mtime_n,
+                entry.dev, entry.ino, entry.mode, entry.uid, entry.gid,
+                entry.size, entry.sha1, entry.flags)
+        path = entry.path.encode()
+        length = ((62 + len(path) + 8) // 8) * 8
+        packed_entry = entry_head + path + b'\x00' * (length - 62 - len(path))
+        packed_entries.append(packed_entry)
+    header = struct.pack('!4sLL', b'DIRC', 2, len(entries))
+    all_data = header + b''.join(packed_entries)
+    digest = hashlib.sha1(all_data).digest()
+    write_file(os.path.join('.git', 'index'), all_data + digest)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
