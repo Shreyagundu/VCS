@@ -20,6 +20,11 @@ def write_file(path, data):
     with open(path, 'wb') as f:
         f.write(data)
 
+def read_file(path):
+    """Read contents of file at given path as bytes."""
+    with open(path, 'rb') as f:
+        return f.read()
+
 def hash_object(data, obj_type, write=True):
     """Compute hash of object data of given type and write to object store if
     "write" is True. Return SHA-1 object hash as hex string.
