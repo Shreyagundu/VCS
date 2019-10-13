@@ -332,6 +332,46 @@ def http_request(url, username, password, data=None):
     return f.read()
 
 
+def get_remote_master_hash(git_url, username, password):
+    """Get commit hash of remote master branch, return SHA-1 hex string or
+    None if no remote commits.
+    """
+    url = git_url + '/info/refs?service=git-receive-pack'
+    response = http_request(url, username, password)
+    lines = extract_lines(response)
+    assert lines[0] == b'# service=git-receive-pack\n'
+    assert lines[1] == b''
+    if lines[2][:40] == b'0' * 40:
+        return None
+    master_sha1, master_ref = lines[2].split(b'\x00')[0].split()
+    assert master_ref == b'refs/heads/master'
+    assert len(master_sha1) == 40
+    return master_sha1.decode()
+
+def read_tree(sha1=None, data=None):
+    """Read tree object with given SHA-1 (hex string) or data, and return list
+    of (mode, path, sha1) tuples.
+    """
+    if sha1 is not None:
+        obj_type, data = read_object(sha1)
+        assert obj_type == 'tree'
+    elif data is None:
+        raise TypeError('must specify "sha1" or "data"')
+    i = 0
+    entries = []
+    for _ in range(1000):
+        end = data.find(b'\x00', i)
+        if end == -1:
+            break
+        mode_str, path = data[i:end].decode().split()
+        mode = int(mode_str, 8)
+        digest = data[end + 1:end + 21]
+        entries.append((mode, path, digest.hex()))
+        i = end + 1 + 20
+    return entries
+
+
+
 def ls_files(details=False):
     """Print list of files in index (including mode, SHA-1, and stage number
     if "details" is True).
