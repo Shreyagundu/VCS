@@ -370,6 +370,45 @@ def read_tree(sha1=None, data=None):
         i = end + 1 + 20
     return entries
 
+def find_tree_objects(tree_sha1):
+    """Return set of SHA-1 hashes of all objects in this tree (recursively),
+    including the hash of the tree itself.
+    """
+    objects = {tree_sha1}
+    for mode, path, sha1 in read_tree(sha1=tree_sha1):
+        if stat.S_ISDIR(mode):
+            objects.update(find_tree_objects(sha1))
+        else:
+            objects.add(sha1)
+    return objects
+
+
+def find_commit_objects(commit_sha1):
+    """Return set of SHA-1 hashes of all objects in this commit (recursively),
+    its tree, its parents, and the hash of the commit itself.
+    """
+    objects = {commit_sha1}
+    obj_type, commit = read_object(commit_sha1)
+    assert obj_type == 'commit'
+    lines = commit.decode().splitlines()
+    tree = next(l[5:45] for l in lines if l.startswith('tree '))
+    objects.update(find_tree_objects(tree))
+    parents = (l[7:47] for l in lines if l.startswith('parent '))
+    for parent in parents:
+        objects.update(find_commit_objects(parent))
+    return objects
+
+
+def find_missing_objects(local_sha1, remote_sha1):
+    """Return set of SHA-1 hashes of objects in local commit that are missing
+    at the remote (based on the given remote commit hash).
+    """
+    local_objects = find_commit_objects(local_sha1)
+    if remote_sha1 is None:
+        return local_objects
+    remote_objects = find_commit_objects(remote_sha1)
+    return local_objects - remote_objects
+
 
 
 def ls_files(details=False):
