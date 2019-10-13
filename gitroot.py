@@ -1,7 +1,18 @@
 #!/usr/bin/env python3
 
-import argparse, collections, difflib, enum, hashlib, operator, os, stat
-import struct, sys, time, urllib.request, zlib
+import argparse
+import collections
+import difflib
+import enum
+import hashlib
+import operator
+import os
+import stat
+import struct
+import sys
+import time
+import urllib.request
+import zlib
 
 IndexEntry = collections.namedtuple('IndexEntry', [
     'ctime_s', 'ctime_n', 'mtime_s', 'mtime_n', 'dev', 'ino', 'mode', 'uid',
