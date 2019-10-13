@@ -409,6 +409,61 @@ def find_missing_objects(local_sha1, remote_sha1):
     remote_objects = find_commit_objects(remote_sha1)
     return local_objects - remote_objects
 
+def encode_pack_object(obj):
+    """Encode a single object for a pack file and return bytes (variable-
+    length header followed by compressed data bytes).
+    """
+    obj_type, data = read_object(obj)
+    type_num = ObjectType[obj_type].value
+    size = len(data)
+    byte = (type_num << 4) | (size & 0x0f)
+    size >>= 4
+    header = []
+    while size:
+        header.append(byte | 0x80)
+        byte = size & 0x7f
+        size >>= 7
+    header.append(byte)
+    return bytes(header) + zlib.compress(data)
+
+
+def create_pack(objects):
+    """Create pack file containing all objects in given given set of SHA-1
+    hashes, return data bytes of full pack file.
+    """
+    header = struct.pack('!4sLL', b'PACK', 2, len(objects))
+    body = b''.join(encode_pack_object(o) for o in sorted(objects))
+    contents = header + body
+    sha1 = hashlib.sha1(contents).digest()
+    data = contents + sha1
+    return data
+
+def push(git_url, username=None, password=None):
+    """Push master branch to given git repo URL."""
+    if username is None:
+        username = os.environ['GIT_USERNAME']
+    if password is None:
+        password = os.environ['GIT_PASSWORD']
+    remote_sha1 = get_remote_master_hash(git_url, username, password)
+    local_sha1 = get_local_master_hash()
+    missing = find_missing_objects(local_sha1, remote_sha1)
+    print('updating remote master from {} to {} ({} object{})'.format(
+            remote_sha1 or 'no commits', local_sha1, len(missing),
+            '' if len(missing) == 1 else 's'))
+    lines = ['{} {} refs/heads/master\x00 report-status'.format(
+            remote_sha1 or ('0' * 40), local_sha1).encode()]
+    data = build_lines_data(lines) + create_pack(missing)
+    url = git_url + '/git-receive-pack'
+    response = http_request(url, username, password, data=data)
+    lines = extract_lines(response)
+    assert len(lines) >= 2, \
+        'expected at least 2 lines, got {}'.format(len(lines))
+    assert lines[0] == b'unpack ok\n', \
+        "expected line 1 b'unpack ok', got: {}".format(lines[0])
+    assert lines[1] == b'ok refs/heads/master\n', \
+        "expected line 2 b'ok refs/heads/master\n', got: {}".format(lines[1])
+    return (remote_sha1, missing)
+
 
 
 def ls_files(details=False):
