@@ -174,6 +174,15 @@ def write_tree():
     return hash_object(b''.join(tree_entries), 'tree')
 
 
+def get_local_master_hash():
+    """Get current commit hash (SHA-1 string) of local master branch."""
+    master_path = os.path.join('.git', 'refs', 'heads', 'master')
+    try:
+        return read_file(master_path).decode().strip()
+    except FileNotFoundError:
+        return None
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     sub_parsers = parser.add_subparsers(dest='command', metavar='command')
