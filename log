@@ -1,0 +1,201 @@
+commit 1a31e2a7fd3d2bc90009989cdbfbb0be8a5b0faa
+Author: KShivendu <shivendu@iitbhilai.ac.in>
+Date:   Sun Oct 13 23:22:04 2019 +0530
+
+    Finalised the code
+
+commit 8b73f96308433d09f998ae44e5541f1b6d848ca9
+Author: KShivendu <shivendu@iitbhilai.ac.in>
+Date:   Sun Oct 13 23:01:11 2019 +0530
+
+    Added final functions for pushing to the server
+
+commit d76ffa7fe0544191e575f80f88e7b6b58875c442
+Author: KShivendu <shivendu@iitbhilai.ac.in>
+Date:   Sun Oct 13 23:00:31 2019 +0530
+
+    Added code to find different types of objects
+
+commit b3219708ea65c89e43be5b035e2d6ac1a4364931
+Author: KShivendu <shivendu@iitbhilai.ac.in>
+Date:   Sun Oct 13 22:59:51 2019 +0530
+
+    Added functions to read trees
+
+commit 66bcb2d684e64a086f9ea19830782df26049a6a9
+Author: KShivendu <shivendu@iitbhilai.ac.in>
+Date:   Sun Oct 13 22:58:06 2019 +0530
+
+    Added basic functions for HTTP request
+
+commit c869861cd3858d99bcf2b75fbdb78ee4b9a992f3
+Merge: f832e74 4685215
+Author: KShivendu <shivendu@iitbhilai.ac.in>
+Date:   Sun Oct 13 22:52:56 2019 +0530
+
+    Handled conflicts
+
+commit f832e7448ae64b631b34acea5c5981e307545482
+Merge: 8fe32ed 4e509a4
+Author: Kumar Shivendu <kshivendu1@gmail.com>
+Date:   Sun Oct 13 17:07:52 2019 +0000
+
+    Merged in commitFeature (pull request #1)
+    
+    CommitFeature
+
+commit 8fe32ed78039d7c63441af2b9c0e0fb50fd34ebe
+Author: KShivendu <shivendu@iitbhilai.ac.in>
+Date:   Sun Oct 13 22:33:32 2019 +0530
+
+    Added Functions for handling git index
+
+commit 9ade7733a2a46306fee7269b6becad003629f700
+Author: KShivendu <shivendu@iitbhilai.ac.in>
+Date:   Sun Oct 13 22:29:17 2019 +0530
+
+    Function to read git index
+
+commit 736bc372f22f0160e2eee103d60c221ac68c44ac
+Author: KShivendu <shivendu@iitbhilai.ac.in>
+Date:   Sun Oct 13 22:28:07 2019 +0530
+
+    Added IndexEntry Collection for git index
+
+commit d53121abb9dea5d1c88526947d7cf26f3d3f27d1
+Author: KShivendu <shivendu@iitbhilai.ac.in>
+Date:   Sun Oct 13 22:25:19 2019 +0530
+
+    Added function for adjusting error in add
+
+commit 4e509a46464bff10fa7545532cac2867fb15b0bf
+Author: Ashutosh Sahu <uniqueashutosh1@gmail.com>
+Date:   Sun Oct 13 21:06:17 2019 +0530
+
+    Changed Indentation
+
+commit 5574e803cc62bf92505cf7f1b19d4c56ca7c83fa
+Author: Ashutosh Sahu <uniqueashutosh1@gmail.com>
+Date:   Sun Oct 13 21:04:23 2019 +0530
+
+    Added commit
+
+commit 6c4f857b3bcf17b913c19ba4d68ed0583b85288e
+Author: Ashutosh Sahu <uniqueashutosh1@gmail.com>
+Date:   Sun Oct 13 19:51:12 2019 +0530
+
+    Added get_local_master_hash
+
+commit e215067e928647d0b9acc6c48fdd7cb580fdd521
+Author: Ashutosh Sahu <uniqueashutosh1@gmail.com>
+Date:   Sun Oct 13 19:39:46 2019 +0530
+
+    Added write_tree
+
+commit ef04ecd5918eb9f2769916d996be660cf16fdfbb
+Author: Ashutosh Sahu <uniqueashutosh1@gmail.com>
+Date:   Sun Oct 13 19:33:07 2019 +0530
+
+    Added index entries and read_index function
+
+commit 50362de99ee1e3e1082566f429ab45c1ef5857d6
+Author: Ashutosh Sahu <uniqueashutosh1@gmail.com>
+Date:   Sun Oct 13 18:08:46 2019 +0530
+
+    added read_tree function
+
+commit 1820b5e8a7e97d2a0590aa6f320badb208805ba9
+Author: Shreyagundu <gundus@iitbhilai.ac.in>
+Date:   Sun Oct 13 06:05:34 2019 +0530
+
+    Updating README file
+
+commit 468521525f911b024896309f83c366c8719c737c
+Author: Shreyagundu <gundus@iitbhilai.ac.in>
+Date:   Sun Oct 13 03:55:20 2019 +0530
+
+    add_added
+
+commit d2afd3b733c7808513d862f64b72dfa5c5079042
+Author: Shreyagundu <gundus@iitbhilai.ac.in>
+Date:   Sun Oct 13 03:54:25 2019 +0530
+
+    write_index_added
+
+commit 3a9fcc64a9f54e767945561dc1e7752975303ebd
+Author: Shreyagundu <gundus@iitbhilai.ac.in>
+Date:   Sun Oct 13 03:53:22 2019 +0530
+
+    diff_added
+
+commit 4860cb98ed00ac71f1d1cfd850d7c4302d6fb60d
+Author: Shreyagundu <gundus@iitbhilai.ac.in>
+Date:   Sun Oct 13 03:52:16 2019 +0530
+
+    status_added
+
+commit 32c76bbbc207787c41ff71812485b30ba4d757cc
+Author: Shreyagundu <gundus@iitbhilai.ac.in>
+Date:   Sun Oct 13 03:51:34 2019 +0530
+
+    get_status_added
+
+commit 4d79e2cdf95e2e38c69ba1606c9dfcbc98e0149d
+Author: Shreyagundu <gundus@iitbhilai.ac.in>
+Date:   Sun Oct 13 03:50:21 2019 +0530
+
+    ls_files_added
+
+commit f52fcbf35154191c067c93c0801f771f36413386
+Author: Shreyagundu <gundus@iitbhilai.ac.in>
+Date:   Sun Oct 13 03:49:12 2019 +0530
+
+    read_index_added
+
+commit 97627f863cc7b394d1a7440f22a4e9bfef20d317
+Author: Shreyagundu <gundus@iitbhilai.ac.in>
+Date:   Sun Oct 13 03:45:49 2019 +0530
+
+    read_file_added
+
+commit c3d1a8dc7f72cd81fa4d7cff40e376e4bf9054e4
+Author: Shreyagundu <gundus@iitbhilai.ac.in>
+Date:   Sun Oct 13 03:37:55 2019 +0530
+
+    cat_file_added
+
+commit 8548242687be6525ae94430be4e4cb06ec1668da
+Author: KShivendu <shivendu@iitbhilai.ac.in>
+Date:   Sun Oct 13 14:57:45 2019 +0530
+
+    Added hash-object in README
+
+commit 0c79e78c04cab02f244b17c8693cb8e611461298
+Author: KShivendu <shivendu@iitbhilai.ac.in>
+Date:   Sun Oct 13 12:54:35 2019 +0530
+
+    Added function to read object of given SHA1 value
+
+commit 83acff05e97ff30c393f5bda18f5808dcd95a82b
+Author: KShivendu <shivendu@iitbhilai.ac.in>
+Date:   Sun Oct 13 12:53:50 2019 +0530
+
+    Added function to find object with given atleast 2 SHA1 values
+
+commit cfc831c71beebe679e3f8bdb6939c2357952d4bb
+Author: KShivendu <shivendu@iitbhilai.ac.in>
+Date:   Sun Oct 13 12:51:15 2019 +0530
+
+    Added hash_object function
+
+commit cdf36c73027a6a59596b66671597604d29c103f1
+Author: KShivendu <shivendu@iitbhilai.ac.in>
+Date:   Sun Oct 13 12:47:48 2019 +0530
+
+    added README file
+
+commit 1814d977a6297656f5bbe4af2fb8beac1c139774
+Author: KShivendu <shivendu@iitbhilai.ac.in>
+Date:   Sun Oct 13 12:47:02 2019 +0530
+
+    Added Init feature

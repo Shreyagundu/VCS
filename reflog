@@ -1,0 +1,30 @@
+1a31e2a HEAD@{0}: commit: Finalised the code
+8b73f96 HEAD@{1}: merge serverFeatures: Fast-forward
+c869861 HEAD@{2}: checkout: moving from serverFeatures to master
+8b73f96 HEAD@{3}: commit: Added final functions for pushing to the server
+d76ffa7 HEAD@{4}: commit: Added code to find different types of objects
+b321970 HEAD@{5}: commit: Added functions to read trees
+66bcb2d HEAD@{6}: commit (amend): Added basic functions for HTTP request
+187baf3 HEAD@{7}: commit: Added functions for HTTP request
+c869861 HEAD@{8}: checkout: moving from master to serverFeatures
+c869861 HEAD@{9}: commit (merge): Handled conflicts
+f832e74 HEAD@{10}: checkout: moving from master to master
+f832e74 HEAD@{11}: pull: Fast-forward
+8fe32ed HEAD@{12}: commit: Added Functions for handling git index
+9ade773 HEAD@{13}: commit: Function to read git index
+736bc37 HEAD@{14}: commit: Added IndexEntry Collection for git index
+d53121a HEAD@{15}: commit: Added function for adjusting error in add
+1820b5e HEAD@{16}: pull: Fast-forward
+8548242 HEAD@{17}: merge hashObject: Fast-forward
+cdf36c7 HEAD@{18}: checkout: moving from hashObject to master
+8548242 HEAD@{19}: commit: Added hash-object in README
+0c79e78 HEAD@{20}: checkout: moving from master to hashObject
+cdf36c7 HEAD@{21}: checkout: moving from hashObject to master
+0c79e78 HEAD@{22}: checkout: moving from master to hashObject
+cdf36c7 HEAD@{23}: checkout: moving from hashObject to master
+0c79e78 HEAD@{24}: commit: Added function to read object of given SHA1 value
+83acff0 HEAD@{25}: commit: Added function to find object with given atleast 2 SHA1 values
+cfc831c HEAD@{26}: commit: Added hash_object function
+cdf36c7 HEAD@{27}: checkout: moving from master to hashObject
+cdf36c7 HEAD@{28}: commit: added README file
+1814d97 HEAD@{29}: commit (initial): Added Init feature
