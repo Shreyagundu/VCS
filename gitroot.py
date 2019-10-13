@@ -51,6 +51,21 @@ def find_object(sha1_prefix):
                 len(objects), sha1_prefix))
     return os.path.join(obj_dir, objects[0])
 
+def read_object(sha1_prefix):
+    """Read object with given SHA-1 prefix and return tuple of
+    (object_type, data_bytes), or raise ValueError if not found.
+    """
+    path = find_object(sha1_prefix)
+    full_data = zlib.decompress(read_file(path))
+    nul_index = full_data.index(b'\x00')
+    header = full_data[:nul_index]
+    obj_type, size_str = header.decode().split()
+    size = int(size_str)
+    data = full_data[nul_index + 1:]
+    assert size == len(data), 'expected size {}, got {} bytes'.format(
+            size, len(data))
+    return (obj_type, data)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
