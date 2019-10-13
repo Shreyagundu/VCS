@@ -1,7 +1,23 @@
 #!/usr/bin/env python3
 
-import argparse, collections, difflib, enum, hashlib, operator, os, stat
-import struct, sys, time, urllib.request, zlib
+import argparse
+import collections
+import difflib
+import enum
+import hashlib
+import operator
+import os
+import stat
+import struct
+import sys
+import time
+import urllib.request
+import zlib
+
+IndexEntry = collections.namedtuple('IndexEntry', [
+    'ctime_s', 'ctime_n', 'mtime_s', 'mtime_n', 'dev', 'ino', 'mode', 'uid',
+    'gid', 'size', 'sha1', 'flags', 'path',
+])
 
 # Data for one entry in the git index (.git/index)
 IndexEntry = collections.namedtuple('IndexEntry', [
@@ -26,10 +42,12 @@ def write_file(path, data):
     with open(path, 'wb') as f:
         f.write(data)
 
+
 def read_file(path):
     """Read contents of file at given path as bytes."""
     with open(path, 'rb') as f:
         return f.read()
+
 
 def hash_object(data, obj_type, write=True):
     """Compute hash of object data of given type and write to object store if
@@ -45,6 +63,7 @@ def hash_object(data, obj_type, write=True):
             write_file(path, zlib.compress(full_data))
     return sha1
 
+
 def find_object(sha1_prefix):
     """Find object with given SHA-1 prefix and return path to object in object
     store, or raise ValueError if there are no objects or multiple objects
@@ -59,8 +78,9 @@ def find_object(sha1_prefix):
         raise ValueError('object {!r} not found'.format(sha1_prefix))
     if len(objects) >= 2:
         raise ValueError('multiple objects ({}) with prefix {!r}'.format(
-                len(objects), sha1_prefix))
+            len(objects), sha1_prefix))
     return os.path.join(obj_dir, objects[0])
+
 
 def read_object(sha1_prefix):
     """Read object with given SHA-1 prefix and return tuple of
@@ -74,7 +94,7 @@ def read_object(sha1_prefix):
     size = int(size_str)
     data = full_data[nul_index + 1:]
     assert size == len(data), 'expected size {}, got {} bytes'.format(
-            size, len(data))
+        size, len(data))
     return (obj_type, data)
 
 def add(paths):
@@ -135,7 +155,7 @@ def cat_file(mode, sha1_prefix):
     if mode in ['commit', 'tree', 'blob']:
         if obj_type != mode:
             raise ValueError('expected object type {}, got {}'.format(
-                    mode, obj_type))
+                mode, obj_type))
         sys.stdout.buffer.write(data)
     elif mode == 'size':
         print(len(data))
@@ -154,6 +174,108 @@ def cat_file(mode, sha1_prefix):
         raise ValueError('unexpected mode {!r}'.format(mode))
 
 
+def read_tree(sha1=None, data=None):
+    """Read tree object with given SHA-1 (hex string) or data, and return list
+    of (mode, path, sha1) tuples.
+    """
+    if sha1 is not None:
+        obj_type, data = read_object(sha1)
+        assert obj_type == 'tree'
+    elif data is None:
+        raise TypeError('must specify "sha1" or "data"')
+    i = 0
+    entries = []
+    for _ in range(1000):
+        end = data.find(b'\x00', i)
+        if end == -1:
+            break
+        mode_str, path = data[i:end].decode().split()
+        mode = int(mode_str, 8)
+        digest = data[end + 1:end + 21]
+        entries.append((mode, path, digest.hex()))
+        i = end + 1 + 20
+    return entries
+
+
+def read_index():
+    """Read git index file and return list of IndexEntry objects."""
+    try:
+        data = read_file(os.path.join('.git', 'index'))
+    except FileNotFoundError:
+        return []
+    digest = hashlib.sha1(data[:-20]).digest()
+    assert digest == data[-20:], 'invalid index checksum'
+    signature, version, num_entries = struct.unpack('!4sLL', data[:12])
+    assert signature == b'DIRC', \
+        'invalid index signature {}'.format(signature)
+    assert version == 2, 'unknown index version {}'.format(version)
+    entry_data = data[12:-20]
+    entries = []
+    i = 0
+    while i + 62 < len(entry_data):
+        fields_end = i + 62
+        fields = struct.unpack('!LLLLLLLLLL20sH', entry_data[i:fields_end])
+        path_end = entry_data.index(b'\x00', fields_end)
+        path = entry_data[fields_end:path_end]
+        entry = IndexEntry(*(fields + (path.decode(),)))
+        entries.append(entry)
+        entry_len = ((62 + len(path) + 8) // 8) * 8
+        i += entry_len
+    assert len(entries) == num_entries
+    return entries
+
+
+def write_tree():
+    """Write a tree object from the current index entries."""
+    tree_entries = []
+    for entry in read_index():
+        assert '/' not in entry.path, \
+                'currently only supports a single, top-level directory'
+        mode_path = '{:o} {}'.format(entry.mode, entry.path).encode()
+        tree_entry = mode_path + b'\x00' + entry.sha1
+        tree_entries.append(tree_entry)
+    return hash_object(b''.join(tree_entries), 'tree')
+
+
+def get_local_master_hash():
+    """Get current commit hash (SHA-1 string) of local master branch."""
+    master_path = os.path.join('.git', 'refs', 'heads', 'master')
+    try:
+        return read_file(master_path).decode().strip()
+    except FileNotFoundError:
+        return None
+
+
+def commit(message, author=None):
+    """Commit the current state of the index to master with given message.
+    Return hash of commit object.
+    """
+    tree = write_tree()
+    parent = get_local_master_hash()
+    if author is None:
+        author = '{} <{}>'.format(
+                os.environ['GIT_AUTHOR_NAME'], os.environ['GIT_AUTHOR_EMAIL'])
+    timestamp = int(time.mktime(time.localtime()))
+    utc_offset = -time.timezone
+    author_time = '{} {}{:02}{:02}'.format(
+            timestamp,
+            '+' if utc_offset > 0 else '-',
+            abs(utc_offset) // 3600,
+            (abs(utc_offset) // 60) % 60)
+    lines = ['tree ' + tree]
+    if parent:
+        lines.append('parent ' + parent)
+    lines.append('author {} {}'.format(author, author_time))
+    lines.append('committer {} {}'.format(author, author_time))
+    lines.append('')
+    lines.append(message)
+    lines.append('')
+    data = '\n'.join(lines).encode()
+    sha1 = hash_object(data, 'commit')
+    master_path = os.path.join('.git', 'refs', 'heads', 'master')
+    write_file(master_path, (sha1 + '\n').encode())
+    print('committed to master: {:7}'.format(sha1))
+    return sha1
 
 
 if __name__ == '__main__':
@@ -162,67 +284,67 @@ if __name__ == '__main__':
     sub_parsers.required = True
 
     sub_parser = sub_parsers.add_parser('add',
-            help='add file(s) to index')
+                                        help='add file(s) to index')
     sub_parser.add_argument('paths', nargs='+', metavar='path',
-            help='path(s) of files to add')
+                            help='path(s) of files to add')
 
     sub_parser = sub_parsers.add_parser('cat-file',
-            help='display contents of object')
+                                        help='display contents of object')
     valid_modes = ['commit', 'tree', 'blob', 'size', 'type', 'pretty']
     sub_parser.add_argument('mode', choices=valid_modes,
-            help='object type (commit, tree, blob) or display mode (size, '
-                 'type, pretty)')
+                            help='object type (commit, tree, blob) or display mode (size, '
+                                 'type, pretty)')
     sub_parser.add_argument('hash_prefix',
-            help='SHA-1 hash (or hash prefix) of object to display')
+                            help='SHA-1 hash (or hash prefix) of object to display')
 
     sub_parser = sub_parsers.add_parser('commit',
-            help='commit current state of index to master branch')
+                                        help='commit current state of index to master branch')
     sub_parser.add_argument('-a', '--author',
-            help='commit author in format "A U Thor <author@example.com>" '
-                 '(uses GIT_AUTHOR_NAME and GIT_AUTHOR_EMAIL environment '
-                 'variables by default)')
+                            help='commit author in format "A U Thor <author@example.com>" '
+                                 '(uses GIT_AUTHOR_NAME and GIT_AUTHOR_EMAIL environment '
+                                 'variables by default)')
     sub_parser.add_argument('-m', '--message', required=True,
-            help='text of commit message')
+                            help='text of commit message')
 
     sub_parser = sub_parsers.add_parser('diff',
-            help='show diff of files changed (between index and working '
-                 'copy)')
+                                        help='show diff of files changed (between index and working '
+                                             'copy)')
 
     sub_parser = sub_parsers.add_parser('hash-object',
-            help='hash contents of given path (and optionally write to '
-                 'object store)')
+                                        help='hash contents of given path (and optionally write to '
+                                             'object store)')
     sub_parser.add_argument('path',
-            help='path of file to hash')
+                            help='path of file to hash')
     sub_parser.add_argument('-t', choices=['commit', 'tree', 'blob'],
-            default='blob', dest='type',
-            help='type of object (default %(default)r)')
+                            default='blob', dest='type',
+                            help='type of object (default %(default)r)')
     sub_parser.add_argument('-w', action='store_true', dest='write',
-            help='write object to object store (as well as printing hash)')
+                            help='write object to object store (as well as printing hash)')
 
     sub_parser = sub_parsers.add_parser('init',
-            help='initialize a new repo')
+                                        help='initialize a new repo')
     sub_parser.add_argument('repo',
-            help='directory name for new repo')
+                            help='directory name for new repo')
 
     sub_parser = sub_parsers.add_parser('ls-files',
-            help='list files in index')
+                                        help='list files in index')
     sub_parser.add_argument('-s', '--stage', action='store_true',
-            help='show object details (mode, hash, and stage number) in '
-                 'addition to path')
+                            help='show object details (mode, hash, and stage number) in '
+                                 'addition to path')
 
     sub_parser = sub_parsers.add_parser('push',
-            help='push master branch to given git server URL')
+                                        help='push master branch to given git server URL')
     sub_parser.add_argument('git_url',
-            help='URL of git repo')
+                            help='URL of git repo')
     sub_parser.add_argument('-p', '--password',
-            help='password to use for authentication (uses GIT_PASSWORD '
-                 'environment variable by default)')
+                            help='password to use for authentication (uses GIT_PASSWORD '
+                                 'environment variable by default)')
     sub_parser.add_argument('-u', '--username',
-            help='username to use for authentication (uses GIT_USERNAME '
-                 'environment variable by default)')
+                            help='username to use for authentication (uses GIT_USERNAME '
+                                 'environment variable by default)')
 
     sub_parser = sub_parsers.add_parser('status',
-            help='show status of working copy')
+                                        help='show status of working copy')
 
     args = parser.parse_args()
     if args.command == 'add':
@@ -250,5 +372,3 @@ if __name__ == '__main__':
         status()
     else:
         assert False, 'unexpected command {!r}'.format(args.command)
-
-
