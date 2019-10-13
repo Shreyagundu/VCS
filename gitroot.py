@@ -162,6 +162,18 @@ def read_index():
     return entries
 
 
+def write_tree():
+    """Write a tree object from the current index entries."""
+    tree_entries = []
+    for entry in read_index():
+        assert '/' not in entry.path, \
+                'currently only supports a single, top-level directory'
+        mode_path = '{:o} {}'.format(entry.mode, entry.path).encode()
+        tree_entry = mode_path + b'\x00' + entry.sha1
+        tree_entries.append(tree_entry)
+    return hash_object(b''.join(tree_entries), 'tree')
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     sub_parsers = parser.add_subparsers(dest='command', metavar='command')
