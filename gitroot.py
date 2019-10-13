@@ -3,6 +3,11 @@
 import argparse, collections, difflib, enum, hashlib, operator, os, stat
 import struct, sys, time, urllib.request, zlib
 
+IndexEntry = collections.namedtuple('IndexEntry', [
+    'ctime_s', 'ctime_n', 'mtime_s', 'mtime_n', 'dev', 'ino', 'mode', 'uid',
+    'gid', 'size', 'sha1', 'flags', 'path',
+])
+
 
 def init(repo):
     """Create directory for repo and initialize .git directory."""
@@ -126,6 +131,34 @@ def read_tree(sha1=None, data=None):
         digest = data[end + 1:end + 21]
         entries.append((mode, path, digest.hex()))
         i = end + 1 + 20
+    return entries
+
+
+def read_index():
+    """Read git index file and return list of IndexEntry objects."""
+    try:
+        data = read_file(os.path.join('.git', 'index'))
+    except FileNotFoundError:
+        return []
+    digest = hashlib.sha1(data[:-20]).digest()
+    assert digest == data[-20:], 'invalid index checksum'
+    signature, version, num_entries = struct.unpack('!4sLL', data[:12])
+    assert signature == b'DIRC', \
+        'invalid index signature {}'.format(signature)
+    assert version == 2, 'unknown index version {}'.format(version)
+    entry_data = data[12:-20]
+    entries = []
+    i = 0
+    while i + 62 < len(entry_data):
+        fields_end = i + 62
+        fields = struct.unpack('!LLLLLLLLLL20sH', entry_data[i:fields_end])
+        path_end = entry_data.index(b'\x00', fields_end)
+        path = entry_data[fields_end:path_end]
+        entry = IndexEntry(*(fields + (path.decode(),)))
+        entries.append(entry)
+        entry_len = ((62 + len(path) + 8) // 8) * 8
+        i += entry_len
+    assert len(entries) == num_entries
     return entries
 
 
