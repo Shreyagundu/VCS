@@ -292,6 +292,46 @@ def commit(message, author=None):
     write_file(master_path, (sha1 + '\n').encode())
     print('committed to master: {:7}'.format(sha1))
     return sha1
+
+def extract_lines(data):
+    """Extract list of lines from given server data."""
+    lines = []
+    i = 0
+    for _ in range(1000):
+        line_length = int(data[i:i + 4], 16)
+        line = data[i + 4:i + line_length]
+        lines.append(line)
+        if line_length == 0:
+            i += 4
+        else:
+            i += line_length
+        if i >= len(data):
+            break
+    return lines
+
+def build_lines_data(lines):
+    """Build byte string from given lines to send to server."""
+    result = []
+    for line in lines:
+        result.append('{:04x}'.format(len(line) + 5).encode())
+        result.append(line)
+        result.append(b'\n')
+    result.append(b'0000')
+    return b''.join(result)
+
+
+def http_request(url, username, password, data=None):
+    """Make an authenticated HTTP request to given URL (GET by default, POST
+    if "data" is not None).
+    """
+    password_manager = urllib.request.HTTPPasswordMgrWithDefaultRealm()
+    password_manager.add_password(None, url, username, password)
+    auth_handler = urllib.request.HTTPBasicAuthHandler(password_manager)
+    opener = urllib.request.build_opener(auth_handler)
+    f = opener.open(url, data=data)
+    return f.read()
+
+
 def ls_files(details=False):
     """Print list of files in index (including mode, SHA-1, and stage number
     if "details" is True).
