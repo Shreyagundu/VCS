@@ -14,17 +14,6 @@ import time
 import urllib.request
 import zlib
 
-IndexEntry = collections.namedtuple('IndexEntry', [
-    'ctime_s', 'ctime_n', 'mtime_s', 'mtime_n', 'dev', 'ino', 'mode', 'uid',
-    'gid', 'size', 'sha1', 'flags', 'path',
-])
-
-# Data for one entry in the git index (.git/index)
-IndexEntry = collections.namedtuple('IndexEntry', [
-    'ctime_s', 'ctime_n', 'mtime_s', 'mtime_n', 'dev', 'ino', 'mode', 'uid',
-    'gid', 'size', 'sha1', 'flags', 'path',
-])
-
 
 # Data for one entry in the git index (.git/index)
 IndexEntry = collections.namedtuple('IndexEntry', [
@@ -130,33 +119,6 @@ def add(paths):
         entries.append(entry)
     entries.sort(key=operator.attrgetter('path'))
     write_index(entries)
-
-def read_index():
-    """Read git index file and return list of IndexEntry objects."""
-    try:
-        data = read_file(os.path.join('.git', 'index'))
-    except FileNotFoundError:
-        return []
-    digest = hashlib.sha1(data[:-20]).digest()
-    assert digest == data[-20:], 'invalid index checksum'
-    signature, version, num_entries = struct.unpack('!4sLL', data[:12])
-    assert signature == b'DIRC', \
-            'invalid index signature {}'.format(signature)
-    assert version == 2, 'unknown index version {}'.format(version)
-    entry_data = data[12:-20]
-    entries = []
-    i = 0
-    while i + 62 < len(entry_data):
-        fields_end = i + 62
-        fields = struct.unpack('!LLLLLLLLLL20sH', entry_data[i:fields_end])
-        path_end = entry_data.index(b'\x00', fields_end)
-        path = entry_data[fields_end:path_end]
-        entry = IndexEntry(*(fields + (path.decode(),)))
-        entries.append(entry)
-        entry_len = ((62 + len(path) + 8) // 8) * 8
-        i += entry_len
-    assert len(entries) == num_entries
-    return entries
 
 
 
@@ -348,27 +310,6 @@ def get_remote_master_hash(git_url, username, password):
     assert len(master_sha1) == 40
     return master_sha1.decode()
 
-def read_tree(sha1=None, data=None):
-    """Read tree object with given SHA-1 (hex string) or data, and return list
-    of (mode, path, sha1) tuples.
-    """
-    if sha1 is not None:
-        obj_type, data = read_object(sha1)
-        assert obj_type == 'tree'
-    elif data is None:
-        raise TypeError('must specify "sha1" or "data"')
-    i = 0
-    entries = []
-    for _ in range(1000):
-        end = data.find(b'\x00', i)
-        if end == -1:
-            break
-        mode_str, path = data[i:end].decode().split()
-        mode = int(mode_str, 8)
-        digest = data[end + 1:end + 21]
-        entries.append((mode, path, digest.hex()))
-        i = end + 1 + 20
-    return entries
 
 def find_tree_objects(tree_sha1):
     """Return set of SHA-1 hashes of all objects in this tree (recursively),
@@ -554,23 +495,7 @@ def write_index(entries):
     write_file(os.path.join('.git', 'index'), all_data + digest)
 
 
-def add(paths):
-    """Add all file paths to git index."""
-    paths = [p.replace('\\', '/') for p in paths]
-    all_entries = read_index()
-    entries = [e for e in all_entries if e.path not in paths]
-    for path in paths:
-        sha1 = hash_object(read_file(path), 'blob')
-        st = os.stat(path)
-        flags = len(path.encode())
-        assert flags < (1 << 12)
-        entry = IndexEntry(
-                int(st.st_ctime), 0, int(st.st_mtime), 0, st.st_dev,
-                st.st_ino, st.st_mode, st.st_uid, st.st_gid, st.st_size,
-                bytes.fromhex(sha1), flags, path)
-        entries.append(entry)
-    entries.sort(key=operator.attrgetter('path'))
-    write_index(entries)
+
 
 
 if __name__ == '__main__':
@@ -648,7 +573,7 @@ if __name__ == '__main__':
         try:
             cat_file(args.mode, args.hash_prefix)
         except ValueError as error:
-            print(error, file=sys.stderr)
+            print(error)
             sys.exit(1)
     elif args.command == 'commit':
         commit(args.message, author=args.author)
